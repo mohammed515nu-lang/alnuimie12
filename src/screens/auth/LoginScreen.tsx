@@ -16,6 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { authAPI } from '../../api/services';
 import { getApiErrorMessage } from '../../api/http';
+import {
+  DEMO_CLIENT_EMAIL,
+  DEMO_CONTRACTOR_EMAIL,
+  DEMO_PASSWORD,
+} from '../../auth/demoAccounts';
 import { useStore } from '../../store/useStore';
 import { authUi, font, space, touch } from '../../theme';
 
@@ -56,6 +61,21 @@ export function LoginScreen() {
       'إرسال رابط إعادة التعيين يتطلب إعداداً على الخادم. راجع فريق الباكند لتفعيل المسار.'
     );
     setForgotOpen(false);
+  };
+
+  const loginAsDemo = async (kind: 'contractor' | 'client') => {
+    setLoading(true);
+    try {
+      const res = await authAPI.login(
+        kind === 'contractor' ? DEMO_CONTRACTOR_EMAIL : DEMO_CLIENT_EMAIL,
+        DEMO_PASSWORD
+      );
+      setUser(res.user);
+    } catch (e) {
+      Alert.alert('تعذر الدخول', getApiErrorMessage(e));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onSubmit = async () => {
@@ -265,6 +285,41 @@ export function LoginScreen() {
               </Pressable>
 
               {isLogin ? (
+                <View style={styles.demoBox}>
+                  <Text style={styles.demoTitle}>دخول تجريبي (بدون خادم)</Text>
+                  <Text style={styles.demoHint}>
+                    مقاول: {DEMO_CONTRACTOR_EMAIL}
+                    {'\n'}
+                    عميل: {DEMO_CLIENT_EMAIL}
+                    {'\n'}
+                    كلمة المرور للاثنين: {DEMO_PASSWORD}
+                  </Text>
+                  <View style={styles.demoBtns}>
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={loading}
+                      onPress={() => void loginAsDemo('contractor')}
+                      {...androidRippleAuth()}
+                      style={[styles.demoBtn, loading && { opacity: 0.65 }]}
+                    >
+                      <Ionicons name="hammer-outline" size={18} color={authUi.orange} style={{ marginLeft: 6 }} />
+                      <Text style={styles.demoBtnTxt}>دخول كمقاول</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={loading}
+                      onPress={() => void loginAsDemo('client')}
+                      {...androidRippleAuth()}
+                      style={[styles.demoBtn, loading && { opacity: 0.65 }]}
+                    >
+                      <Ionicons name="person-outline" size={18} color={authUi.orange} style={{ marginLeft: 6 }} />
+                      <Text style={styles.demoBtnTxt}>دخول كعميل</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
+
+              {isLogin ? (
                 <View style={styles.footerRow}>
                   <Pressable onPress={() => setMode('register')} {...androidRippleAuth()}>
                     <Text style={styles.link}>إنشاء حساب جديد</Text>
@@ -462,6 +517,48 @@ const styles = StyleSheet.create({
     fontSize: font.button,
     fontWeight: '800',
     textAlign: 'center',
+  },
+  demoBox: {
+    marginTop: space.lg + 2,
+    padding: space.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: authUi.border,
+    backgroundColor: authUi.inputBg,
+  },
+  demoTitle: {
+    color: authUi.text,
+    fontWeight: '800',
+    fontSize: font.body,
+    textAlign: 'right',
+    marginBottom: space.sm,
+  },
+  demoHint: {
+    color: authUi.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'right',
+    marginBottom: space.md,
+  },
+  demoBtns: {
+    flexDirection: 'row-reverse',
+    gap: space.sm + 2,
+  },
+  demoBtn: {
+    flex: 1,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: authUi.orange,
+    paddingVertical: space.sm + 4,
+    minHeight: 46,
+  },
+  demoBtnTxt: {
+    color: authUi.orange,
+    fontWeight: '800',
+    fontSize: font.caption,
   },
   footerRow: {
     flexDirection: 'row-reverse',

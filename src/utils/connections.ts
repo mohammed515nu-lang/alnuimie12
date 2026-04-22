@@ -33,3 +33,13 @@ export function acceptedClientsForContractor(me: AuthUser, connections: Connecti
   }
   return out;
 }
+
+/** هل يوجد اتصال مقبول بين المستخدم الحالي والطرف الآخر؟ */
+export function isConnectedWith(connections: Connection[], meId: string, otherUserId: string): boolean {
+  return connections.some(
+    (c) =>
+      c.status === 'accepted' &&
+      ((c.fromUserId === meId && c.toUserId === otherUserId) ||
+        (c.toUserId === meId && c.fromUserId === otherUserId))
+  );
+}

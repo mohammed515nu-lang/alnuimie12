@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +8,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -17,16 +19,27 @@ import { getApiErrorMessage } from '../../api/http';
 import type { PublicProfile } from '../../api/types';
 import { colors, pressableRipple, radius, space, touch } from '../../theme';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<RootStackParamList, 'DiscoverUsers'>;
+
+type RoleFilter = 'all' | 'contractor' | 'client';
 
 export function SearchScreen() {
   const navigation = useNavigation<Nav>();
+  const myRole = useStore((s) => s.user?.role);
   const searchUsers = useStore((s) => s.searchUsers);
   const results = useStore((s) => s.searchResults);
 
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** العميل يبحث عن مقاولين افتراضياً، والمقاول عن عملاء */
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+
+  useLayoutEffect(() => {
+    if (myRole === 'client') setRoleFilter('contractor');
+    else if (myRole === 'contractor') setRoleFilter('client');
+    else setRoleFilter('all');
+  }, [myRole]);
 
   const run = useCallback(async () => {
     setError(null);
@@ -47,7 +60,10 @@ export function SearchScreen() {
     return () => clearTimeout(t);
   }, [run]);
 
-  const data = useMemo(() => results, [results]);
+  const data = useMemo(() => {
+    if (roleFilter === 'all') return results;
+    return results.filter((u) => u.role === roleFilter);
+  }, [results, roleFilter]);
 
   const renderItem = ({ item }: { item: PublicProfile }) => (
     <Pressable
@@ -56,95 +72,138 @@ export function SearchScreen() {
       onPress={() => navigation.navigate('PublicProfile', { userId: item._id })}
       {...pressableRipple(colors.primaryTint12)}
     >
+      <Ionicons name="chevron-back" size={18} color={colors.textMuted} />
       <View style={{ flex: 1 }}>
         <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.meta}>
-          {item.role === 'contractor' ? 'مقاول' : item.role === 'client' ? 'عميل' : item.role}
-          {item.city ? ` • ${item.city}` : ''}
-        </Text>
+        <Text style={styles.meta}>{item.role === 'contractor' ? 'مقاول' : item.role === 'client' ? 'عميل' : item.role}</Text>
       </View>
-      <Text style={styles.chev}>›</Text>
+      <View style={styles.roleIcon}>
+        <Ionicons name={item.role === 'contractor' ? 'hammer' : 'person'} size={18} color={colors.onPrimary} />
+      </View>
     </Pressable>
   );
 
-  return (
-    <View style={styles.root}>
-      <Text style={styles.title}>بحث المستخدمين</Text>
-      <Text style={styles.hint}>افتح الملف العام → تواصل → بعد القبول يمكنك الدفع أو الدردشة.</Text>
-      <TextInput
-        placeholder="ابحث بالاسم/الإيميل/التخصص..."
-        placeholderTextColor={colors.placeholder}
-        style={styles.input}
-        value={q}
-        onChangeText={setQ}
-        returnKeyType="search"
-        clearButtonMode="while-editing"
-      />
+  const chip = (key: RoleFilter, label: string) => {
+    const on = roleFilter === key;
+    return (
+      <Pressable
+        key={key}
+        onPress={() => setRoleFilter(key)}
+        style={[styles.chip, on && styles.chipOn]}
+        {...pressableRipple(colors.primaryTint12)}
+      >
+        <Text style={[styles.chipText, on && styles.chipTextOn]}>{label}</Text>
+      </Pressable>
+    );
+  };
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
+  return (
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <View style={styles.root}>
+        <View style={styles.searchWrap}>
+          <Ionicons name="search" size={20} color={colors.textMuted} style={styles.searchIcon} />
+          <TextInput
+            placeholder="ابحث بالاسم، المدينة، التخصص..."
+            placeholderTextColor={colors.placeholder}
+            style={styles.input}
+            value={q}
+            onChangeText={setQ}
+            returnKeyType="search"
+            textAlign="right"
+          />
         </View>
-      ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.error}>{error}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void run()}
-            {...pressableRipple(colors.primaryTint12)}
-            style={styles.retry}
-          >
-            <Text style={styles.retryText}>إعادة المحاولة</Text>
-          </Pressable>
+
+        <View style={styles.chipsRow}>
+          {chip('all', 'الكل')}
+          {chip('contractor', 'المقاولون')}
+          {chip('client', 'العملاء')}
         </View>
-      ) : (
-        <FlatList
-          style={styles.list}
-          data={data}
-          keyExtractor={(x) => x._id}
-          renderItem={renderItem}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<Text style={styles.empty}>لا نتائج</Text>}
-        />
-      )}
-    </View>
+
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.center}>
+            <Text style={styles.error}>{error}</Text>
+            <Pressable accessibilityRole="button" onPress={() => void run()} {...pressableRipple(colors.primaryTint12)} style={styles.retry}>
+              <Text style={styles.retryText}>إعادة المحاولة</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <FlatList
+            style={styles.list}
+            data={data}
+            keyExtractor={(x) => x._id}
+            renderItem={renderItem}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={<Text style={styles.empty}>لا نتائج</Text>}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, padding: space.lg, paddingTop: space.lg + 2 },
-  title: { color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: space.sm - 2 },
-  hint: { color: colors.placeholder, marginBottom: space.sm + 2, lineHeight: 18, fontSize: 13 },
-  input: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
+  safe: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, paddingHorizontal: space.lg, paddingTop: space.sm },
+  searchWrap: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceMid,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderRadius: radius.md,
+    borderColor: colors.borderMuted,
     paddingHorizontal: space.md,
+    marginBottom: space.md,
+  },
+  searchIcon: { marginLeft: space.sm },
+  input: {
+    flex: 1,
     paddingVertical: space.md,
     color: colors.textSecondary,
-    marginBottom: space.sm + 2,
-    minHeight: touch.minHeight,
+    minHeight: touch.minHeight - 4,
   },
+  chipsRow: { flexDirection: 'row-reverse', gap: space.sm, marginBottom: space.md },
+  chip: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm + 2,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMid,
+    borderWidth: 1,
+    borderColor: colors.borderMuted,
+  },
+  chipOn: { borderColor: colors.primary, backgroundColor: colors.primaryTint12 },
+  chipText: { color: colors.textMuted, fontWeight: '800' },
+  chipTextOn: { color: colors.primary },
   list: { flex: 1 },
   listContent: { paddingBottom: space.xxl },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     paddingVertical: space.md,
     paddingHorizontal: space.md,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.cardSoft,
+    borderColor: colors.borderMuted,
+    backgroundColor: colors.surfaceMid,
     marginBottom: space.sm + 2,
     minHeight: touch.minHeight,
+    gap: space.md,
   },
-  name: { color: colors.text, fontWeight: '900' },
-  meta: { color: colors.textMuted, marginTop: space.xs },
-  chev: { color: colors.textMuted, fontSize: 26, paddingLeft: space.sm },
+  roleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  name: { color: colors.text, fontWeight: '900', textAlign: 'right', fontSize: 16 },
+  meta: { color: colors.textMuted, marginTop: 4, textAlign: 'right', fontWeight: '600' },
   center: { flex: 1, paddingTop: space.xxl + 6, alignItems: 'center' },
   error: { color: colors.error, textAlign: 'center', paddingHorizontal: space.md },
   retry: {

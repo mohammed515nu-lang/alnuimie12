@@ -1,19 +1,25 @@
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 
 import { WalletCard } from '../../components/wallet/WalletCard';
+import { navigateFromRoot } from '../../navigation/rootNavigation';
+import type { MainTabParamList } from '../../navigation/types';
 import { useStore } from '../../store/useStore';
-import type { RootStackParamList } from '../../navigation/types';
 import { colors, pressableRipple, radius, space, touch } from '../../theme';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type TabNav = BottomTabNavigationProp<MainTabParamList>;
 
 export function HomeScreen() {
-  const navigation = useNavigation<Nav>();
+  const tabNavigation = useNavigation<TabNav>();
+  const rootNav = useNavigation<NavigationProp<ParamListBase>>();
   const user = useStore((s) => s.user);
-  const logout = useStore((s) => s.logout);
+  const isContractor = user?.role === 'contractor';
+  const isClient = user?.role === 'client';
   const refreshMyProfile = useStore((s) => s.refreshMyProfile);
 
   useEffect(() => {
@@ -27,123 +33,167 @@ export function HomeScreen() {
   }, [refreshMyProfile]);
 
   return (
-    <ScrollView contentContainerStyle={styles.root} keyboardShouldPersistTaps="handled">
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.hi}>مرحباً</Text>
-          <Text style={styles.name}>{user?.name ?? ''}</Text>
-          <Text style={styles.role}>{user?.role === 'contractor' ? 'مقاول' : user?.role === 'client' ? 'عميل' : user?.role}</Text>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.root} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.hi}>مرحباً</Text>
+            <Text style={styles.name}>{user?.name ?? ''}</Text>
+            <Text style={styles.role}>{user?.role === 'contractor' ? 'مقاول' : user?.role === 'client' ? 'صاحب مشروع' : user?.role}</Text>
+          </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="تسجيل الخروج"
-          onPress={() => logout()}
-          {...pressableRipple(colors.primaryTint12)}
-          style={styles.logout}
-        >
-          <Text style={styles.logoutText}>خروج</Text>
-        </Pressable>
-      </View>
 
-      <WalletCard subtitle="الملخص والبطاقات من الخادم؛ يُحدَّث عند فتح الشاشة." />
+        <WalletCard
+          subtitle={
+            isClient
+              ? 'مدفوعاتك وبطاقاتك — تابع الدفع للمقاولين من هنا.'
+              : 'مقبوضاتك ودفعات الموردين — نظرة من الخادم.'
+          }
+        />
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>اجتماعي</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('EditProfile')}
-          {...pressableRipple(colors.primaryTint18)}
-          style={styles.btn}
-        >
-          <Text style={styles.btnText}>تعديل ملفي العام</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('PortfolioManage')}
-          {...pressableRipple(colors.primaryTint12)}
-          style={styles.btnSecondary}
-        >
-          <Text style={styles.btnSecondaryText}>إدارة معرض الأعمال</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('ConnectionRequests')}
-          {...pressableRipple(colors.primaryTint12)}
-          style={styles.btnSecondary}
-        >
-          <Text style={styles.btnSecondaryText}>طلبات التواصل</Text>
-        </Pressable>
-      </View>
+        <Text style={styles.section}>{isClient ? 'اختصارات صاحب المشروع' : 'اختصارات المقاول'}</Text>
+        <View style={styles.grid}>
+          <Pressable
+            style={styles.tile}
+            onPress={() => tabNavigation.navigate('Accounting')}
+            {...pressableRipple(colors.primaryTint12)}
+          >
+            <Ionicons name="calculator-outline" size={28} color={colors.primary} />
+            <Text style={styles.tileText}>{isClient ? 'المدفوعات والمحفظة' : 'المحاسبة والموقع'}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.tile}
+            onPress={() => tabNavigation.navigate('Projects')}
+            {...pressableRipple(colors.primaryTint12)}
+          >
+            <Ionicons name="folder-outline" size={28} color={colors.primary} />
+            <Text style={styles.tileText}>{isClient ? 'مشاريعي' : 'مشاريع العمل'}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.tile}
+            onPress={() => navigateFromRoot(rootNav, 'DiscoverUsers')}
+            {...pressableRipple(colors.primaryTint12)}
+          >
+            <Ionicons name="search" size={28} color={colors.aiPurple} />
+            <Text style={styles.tileText}>{isClient ? 'البحث عن مقاولين' : 'البحث عن عملاء'}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.tile}
+            onPress={() => tabNavigation.navigate('Chats')}
+            {...pressableRipple(colors.primaryTint12)}
+          >
+            <Ionicons name="chatbubbles-outline" size={28} color={colors.link} />
+            <Text style={styles.tileText}>المحادثات</Text>
+          </Pressable>
+          {isClient ? (
+            <Pressable
+              style={styles.tile}
+              onPress={() => navigateFromRoot(rootNav, 'PayContractor')}
+              {...pressableRipple(colors.primaryTint12)}
+            >
+              <Ionicons name="card-outline" size={28} color={colors.success} />
+              <Text style={styles.tileText}>دفع لمقاول</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={styles.tile}
+              onPress={() => navigateFromRoot(rootNav, 'ContractorPaySupplier')}
+              {...pressableRipple(colors.primaryTint12)}
+            >
+              <Ionicons name="construct-outline" size={28} color={colors.success} />
+              <Text style={styles.tileText}>دفع لمورد</Text>
+            </Pressable>
+          )}
+          <Pressable
+            style={styles.tile}
+            onPress={() => navigateFromRoot(rootNav, 'ConnectionRequests')}
+            {...pressableRipple(colors.primaryTint12)}
+          >
+            <Ionicons name="people-outline" size={28} color={colors.reportValue} />
+            <Text style={styles.tileText}>طلبات التواصل</Text>
+          </Pressable>
+        </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>مدفوعات Stripe</Text>
-        {user?.role === 'client' ? (
+        <Text style={styles.section}>حسابي وملفي</Text>
+        <View style={styles.card}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => navigation.navigate('PayContractor')}
-            {...pressableRipple(colors.primaryTint18)}
-            style={styles.btn}
+            onPress={() => tabNavigation.navigate('Account')}
+            {...pressableRipple(colors.primaryTint12)}
+            style={styles.rowBtn}
           >
-            <Text style={styles.btnText}>دفع للمقاول</Text>
+            <Ionicons name="chevron-back" size={20} color={colors.textMuted} />
+            <Text style={styles.rowBtnText}>فتح حسابي</Text>
+            <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
           </Pressable>
-        ) : null}
-        {user?.role === 'contractor' ? (
+          <View style={styles.div} />
           <Pressable
             accessibilityRole="button"
-            onPress={() => navigation.navigate('ContractorPaySupplier')}
-            {...pressableRipple(colors.primaryTint18)}
-            style={styles.btn}
+            onPress={() => navigateFromRoot(rootNav, 'EditProfile')}
+            {...pressableRipple(colors.primaryTint12)}
+            style={styles.rowBtn}
           >
-            <Text style={styles.btnText}>دفع للمورد</Text>
+            <Ionicons name="chevron-back" size={20} color={colors.textMuted} />
+            <Text style={styles.rowBtnText}>تعديل ملفي العام</Text>
+            <Ionicons name="create-outline" size={22} color={colors.link} />
           </Pressable>
-        ) : null}
-      </View>
-    </ScrollView>
+          {isContractor ? (
+            <>
+              <View style={styles.div} />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigateFromRoot(rootNav, 'PortfolioManage')}
+                {...pressableRipple(colors.primaryTint12)}
+                style={styles.rowBtn}
+              >
+                <Ionicons name="chevron-back" size={20} color={colors.textMuted} />
+                <Text style={styles.rowBtnText}>معرض أعمالي</Text>
+                <Ionicons name="images-outline" size={22} color={colors.primary} />
+              </Pressable>
+            </>
+          ) : null}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { padding: space.lg, paddingBottom: space.xxl + 4, backgroundColor: colors.background },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.md },
-  hi: { color: colors.textMuted },
-  name: { color: colors.text, fontSize: 22, fontWeight: '900' },
-  role: { color: colors.primary, marginTop: space.xs, fontWeight: '700' },
-  logout: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm + 2,
-    borderRadius: radius.md,
+  safe: { flex: 1, backgroundColor: colors.background },
+  root: { padding: space.lg, paddingBottom: space.xxl + 4 },
+  header: { marginBottom: space.md },
+  hi: { color: colors.textMuted, textAlign: 'right' },
+  name: { color: colors.text, fontSize: 22, fontWeight: '900', textAlign: 'right', marginTop: space.xs },
+  role: { color: colors.primary, marginTop: space.xs, fontWeight: '800', textAlign: 'right' },
+  section: { color: colors.text, fontSize: 17, fontWeight: '900', textAlign: 'right', marginTop: space.lg, marginBottom: space.sm },
+  grid: { flexDirection: 'row-reverse', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.sm },
+  tile: {
+    width: '48%',
+    backgroundColor: colors.surfaceMid,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.borderMuted,
-    minHeight: touch.minHeight,
-    justifyContent: 'center',
+    padding: space.md,
+    marginBottom: space.sm,
+    alignItems: 'flex-end',
+    minHeight: 100,
+    justifyContent: 'space-between',
   },
-  logoutText: { color: colors.textSecondary, fontWeight: '800' },
+  tileText: { color: colors.textSecondary, fontWeight: '800', textAlign: 'right', marginTop: space.sm },
   card: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
+    backgroundColor: colors.surfaceMid,
     borderRadius: radius.xl,
-    padding: space.md - 2,
-    marginBottom: space.md,
-  },
-  cardTitle: { color: colors.text, fontSize: 16, fontWeight: '900', marginBottom: space.sm + 2 },
-  btn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-    marginTop: space.sm,
-    minHeight: touch.minHeight,
-    justifyContent: 'center',
-  },
-  btnText: { color: colors.onPrimary, textAlign: 'center', fontWeight: '900' },
-  btnSecondary: {
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-    marginTop: space.sm + 2,
     borderWidth: 1,
     borderColor: colors.borderMuted,
-    minHeight: touch.minHeight,
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  btnSecondaryText: { color: colors.textSecondary, textAlign: 'center', fontWeight: '800' },
+  rowBtn: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    padding: space.md,
+    gap: space.md,
+    minHeight: touch.minHeight,
+  },
+  rowBtnText: { flex: 1, color: colors.text, fontWeight: '800', textAlign: 'right', fontSize: 15 },
+  div: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginHorizontal: space.md },
 });

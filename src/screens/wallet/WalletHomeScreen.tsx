@@ -12,10 +12,15 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function WalletHomeScreen() {
   const navigation = useNavigation<Nav>();
   const user = useStore((s) => s.user);
+  const isClient = user?.role === 'client';
 
   return (
     <ScrollView contentContainerStyle={styles.root} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>المحفظة</Text>
+      <Text style={styles.intro}>
+        {isClient
+          ? 'من هنا تدير بطاقاتك وتدفع للمقاولين بعد الاتصال.'
+          : 'من هنا تدير بطاقاتك وتسجّل دفعات الموردين والمقبوضات.'}
+      </Text>
       <WalletCard />
 
       <View style={styles.card}>
@@ -63,7 +68,14 @@ export function WalletHomeScreen() {
 
 const styles = StyleSheet.create({
   root: { padding: space.lg, paddingBottom: space.xxl + 4, backgroundColor: colors.background },
-  title: { color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: space.md },
+  intro: {
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'right',
+    marginBottom: space.md,
+    fontWeight: '600',
+  },
   card: {
     backgroundColor: colors.card,
     borderColor: colors.border,

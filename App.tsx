@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { setAuthToken } from './src/api/http';
@@ -48,10 +49,12 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StripeProvider publishableKey={pk || 'pk_test_placeholder'}>
-        <AppNavigator />
-        <StatusBar style="light" />
-      </StripeProvider>
+      <SafeAreaProvider>
+        <StripeProvider publishableKey={pk || 'pk_test_placeholder'}>
+          <AppNavigator />
+          <StatusBar style="light" />
+        </StripeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

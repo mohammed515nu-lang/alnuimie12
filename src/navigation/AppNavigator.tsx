@@ -23,9 +23,29 @@ import { AddCardScreen } from '../screens/wallet/AddCardScreen';
 import { PayContractorScreen } from '../screens/wallet/PayContractorScreen';
 import { ContractorPaySupplierScreen } from '../screens/wallet/ContractorPaySupplierScreen';
 import { TransfersScreen } from '../screens/wallet/TransfersScreen';
+import { ProjectsScreen } from '../screens/projects/ProjectsScreen';
+import { NewProjectScreen } from '../screens/projects/NewProjectScreen';
+import { BunyanAIScreen } from '../screens/ai/BunyanAIScreen';
+import { AccountingHomeScreen } from '../screens/accounting/AccountingHomeScreen';
+import { InvoicesScreen } from '../screens/accounting/InvoicesScreen';
+import { NewInvoiceScreen } from '../screens/accounting/NewInvoiceScreen';
+import { RevenuesScreen } from '../screens/accounting/RevenuesScreen';
+import { AddRevenueScreen } from '../screens/accounting/AddRevenueScreen';
+import { ExpenseCategoriesScreen } from '../screens/accounting/ExpenseCategoriesScreen';
+import { ReportsScreen } from '../screens/accounting/ReportsScreen';
+import { AccountScreen } from '../screens/account/AccountScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator();
+
+const tabIcon: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Home: 'home-outline',
+  Projects: 'folder-outline',
+  BunyanAI: 'hardware-chip-outline',
+  Accounting: 'calculator-outline',
+  Chats: 'chatbubbles-outline',
+  Account: 'person-outline',
+};
 
 function MainTabs() {
   return (
@@ -34,28 +54,31 @@ function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.borderMuted,
+          paddingTop: 4,
+          height: 62,
+        },
         tabBarHideOnKeyboard: true,
-        tabBarLabelStyle: { fontWeight: '700', fontSize: 11 },
+        tabBarLabelStyle: { fontWeight: '700', fontSize: 10, marginBottom: 2 },
         tabBarIcon: ({ color, size }) => {
-          const map: Record<string, keyof typeof Ionicons.glyphMap> = {
-            Home: 'home',
-            Search: 'search',
-            Chats: 'chatbubbles',
-            Wallet: 'wallet',
-          };
-          const icon = map[route.name] ?? 'ellipse';
-          return <Ionicons name={icon} size={size} color={color} />;
+          const icon = tabIcon[route.name] ?? 'ellipse';
+          return <Ionicons name={icon} size={size - 2} color={color} />;
         },
       })}
     >
       <Tabs.Screen name="Home" component={HomeScreen} options={{ title: 'الرئيسية' }} />
-      <Tabs.Screen name="Search" component={SearchScreen} options={{ title: 'بحث' }} />
-      <Tabs.Screen name="Chats" component={ChatListScreen} options={{ title: 'محادثات' }} />
-      <Tabs.Screen name="Wallet" component={WalletHomeScreen} options={{ title: 'المحفظة' }} />
+      <Tabs.Screen name="Projects" component={ProjectsScreen} options={{ title: 'المشاريع' }} />
+      <Tabs.Screen name="BunyanAI" component={BunyanAIScreen} options={{ title: 'بنيان AI' }} />
+      <Tabs.Screen name="Accounting" component={AccountingHomeScreen} options={{ title: 'المحاسبة' }} />
+      <Tabs.Screen name="Chats" component={ChatListScreen} options={{ title: 'محادثة' }} />
+      <Tabs.Screen name="Account" component={AccountScreen} options={{ title: 'حسابي' }} />
     </Tabs.Navigator>
   );
 }
+
+const stackContent = { backgroundColor: colors.background };
 
 export function AppNavigator() {
   const user = useStore((s) => s.user);
@@ -67,10 +90,10 @@ export function AppNavigator() {
       colors: {
         ...DarkTheme.colors,
         background: colors.background,
-        card: colors.background,
+        card: colors.surfaceMid,
         primary: colors.primary,
         text: colors.textSecondary,
-        border: colors.border,
+        border: colors.borderMuted,
         notification: colors.notification,
       },
     }),
@@ -88,13 +111,22 @@ export function AppNavigator() {
             <Stack.Group
               screenOptions={{
                 headerStyle: { backgroundColor: colors.background },
-                headerTintColor: colors.textSecondary,
+                headerTintColor: colors.text,
                 headerTitleStyle: { fontWeight: '800' },
                 headerShadowVisible: false,
-                contentStyle: { backgroundColor: colors.background },
+                contentStyle: stackContent,
               }}
             >
-              <Stack.Screen name="PublicProfile" component={PublicProfileScreen} options={{ title: 'ملف عام' }} />
+              <Stack.Screen
+                name="DiscoverUsers"
+                component={SearchScreen}
+                options={{ title: 'اكتشف مستخدمين', headerTitleAlign: 'center' }}
+              />
+              <Stack.Screen
+                name="PublicProfile"
+                component={PublicProfileScreen}
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="ChatRoom" component={ChatRoomScreen} options={{ title: 'محادثة' }} />
               <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'تعديل ملفي' }} />
               <Stack.Screen name="PortfolioManage" component={PortfolioManageScreen} options={{ title: 'معرض أعمالي' }} />
@@ -104,6 +136,14 @@ export function AppNavigator() {
               <Stack.Screen name="PayContractor" component={PayContractorScreen} options={{ title: 'دفع للمقاول' }} />
               <Stack.Screen name="ContractorPaySupplier" component={ContractorPaySupplierScreen} options={{ title: 'دفع للمورد' }} />
               <Stack.Screen name="Transfers" component={TransfersScreen} options={{ title: 'التحويلات' }} />
+              <Stack.Screen name="WalletHome" component={WalletHomeScreen} options={{ title: 'المحفظة' }} />
+              <Stack.Screen name="Invoices" component={InvoicesScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="NewInvoice" component={NewInvoiceScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Revenues" component={RevenuesScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="AddRevenue" component={AddRevenueScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="ExpenseCategories" component={ExpenseCategoriesScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="ReportsAccounting" component={ReportsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="NewProject" component={NewProjectScreen} options={{ headerShown: false }} />
             </Stack.Group>
           </>
         )}

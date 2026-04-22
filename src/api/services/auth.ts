@@ -1,4 +1,5 @@
-import { api, setAuthToken } from '../http';
+import { tryDemoLogin, resolveDemoSession } from '../../auth/demoAccounts';
+import { api, getAuthToken, setAuthToken } from '../http';
 import type { AuthUser } from '../types';
 
 type LoginResponse = { token: string; user: AuthUser };
@@ -26,6 +27,11 @@ function normalizeUser(u: unknown): AuthUser {
 
 export const authAPI = {
   async login(email: string, password: string): Promise<LoginResponse> {
+    const demo = tryDemoLogin(email, password);
+    if (demo) {
+      await setAuthToken(demo.token);
+      return { token: demo.token, user: demo.user };
+    }
     const { data } = await api.post<LoginResponse>('/auth/login', { email, password });
     await setAuthToken(data.token);
     return { token: data.token, user: normalizeUser(data.user) };
@@ -44,6 +50,9 @@ export const authAPI = {
   },
 
   async me(): Promise<AuthUser> {
+    const token = await getAuthToken();
+    const demoUser = resolveDemoSession(token);
+    if (demoUser) return demoUser;
     const { data } = await api.get<{ user: unknown }>('/auth/me');
     return normalizeUser(data.user);
   },

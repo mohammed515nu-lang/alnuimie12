@@ -1,47 +1,62 @@
 /**
- * لوحة «بنيان»: خلفية عميقة + سماوي للتمييز + سليت للنصوص.
+ * لوحة التطبيق: خلفية سليت عميقة + كهرماني للتمييز (مطابقة واجهات الصور).
  */
 export const colors = {
-  background: '#0B1220',
-  backgroundElevated: '#111827',
-  surfaceDeep: '#0F172A',
-  surfaceMid: '#1E293B',
+  background: '#0f172a',
+  backgroundElevated: '#121826',
+  surfaceDeep: '#0f172a',
+  surfaceMid: '#1e293b',
 
-  border: '#1F2937',
+  border: '#1e293b',
   borderMuted: '#334155',
 
-  primary: '#38BDF8',
-  onPrimary: '#0B1220',
+  /** زر أساسي / تبويب نشط */
+  primary: '#f59e0b',
+  onPrimary: '#0f172a',
 
-  text: '#F8FAFC',
-  textSecondary: '#E2E8F0',
-  textMuted: '#94A3B8',
-  placeholder: '#64748B',
-  textSubtle: '#CBD5E1',
+  text: '#f8fafc',
+  textSecondary: '#e2e8f0',
+  textMuted: '#94a3b8',
+  placeholder: '#64748b',
+  textSubtle: '#cbd5e1',
 
-  link: '#93C5FD',
-  accentIndigo: '#A5B4FC',
+  /** روابط وأزرار ثانوية (مراسلة، إلغاء) */
+  link: '#3b82f6',
+  accentIndigo: '#a5b4fc',
 
-  card: 'rgba(15,23,42,0.72)',
-  cardSoft: 'rgba(15,23,42,0.55)',
-  chipBg: 'rgba(15,23,42,0.9)',
-  primaryTint12: 'rgba(56,189,248,0.12)',
-  primaryTint18: 'rgba(56,189,248,0.18)',
-  walletInner: 'rgba(11,18,32,0.92)',
-  walletBorderGlow: 'rgba(56,189,248,0.25)',
+  /** بنيان AI — بنفسجي */
+  aiPurple: '#8b5cf6',
+  onAiPurple: '#ffffff',
 
-  error: '#FB7185',
-  warning: '#FB923C',
-  notification: '#F97316',
+  /** أرقام إيجابية / إيرادات */
+  success: '#34d399',
 
-  dangerBorder: '#7F1D1D',
+  /** أرقام في التقارير (سماوي) */
+  reportValue: '#38bdf8',
+
+  card: 'rgba(30,41,59,0.92)',
+  cardSoft: 'rgba(30,41,59,0.75)',
+  chipBg: '#1e293b',
+  primaryTint12: 'rgba(245,158,11,0.14)',
+  primaryTint18: 'rgba(245,158,11,0.22)',
+  walletInner: 'rgba(15,23,42,0.95)',
+  walletBorderGlow: 'rgba(245,158,11,0.28)',
+
+  error: '#fb7185',
+  danger: '#ef4444',
+  warning: '#fb923c',
+  notification: '#f97316',
+
+  dangerBorder: '#7f1d1d',
   dangerBg: 'rgba(127,29,29,0.15)',
-  dangerText: '#FCA5A5',
+  dangerText: '#fca5a5',
+
+  tabBar: '#0b1120',
 } as const;
 
 export const gradients = {
   login: [colors.background, colors.backgroundElevated] as const,
-  walletCard: [colors.surfaceDeep, colors.surfaceMid] as const,
+  walletCard: [colors.surfaceDeep, '#1e293b'] as const,
 } as const;
 
 export type ColorKey = keyof typeof colors;
